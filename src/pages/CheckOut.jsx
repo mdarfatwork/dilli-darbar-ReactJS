@@ -9,6 +9,7 @@ import { resetCart } from '../redux/cartSlice';
 
 const CheckOut = () => {
     const [userAddress, setUserAddress] = useState(null);
+    const [shoppingFirst, setShoppingFirst ] = useState(false)
     const auth = getAuth();
     const user = auth.currentUser;
     const dispatch = useDispatch()
@@ -50,8 +51,8 @@ const CheckOut = () => {
     };
 
     const calculateShippingCost = (totalCost) => {
-      return totalCost >= 500 ? 0 : 50;
-    };
+      return totalCost > 0 && totalCost < 500 ? 50 : 0;
+    };    
 
     const totalCost = calculateTotalPrice();
     const shippingCost = calculateShippingCost(totalCost);
@@ -59,15 +60,14 @@ const CheckOut = () => {
     
     const handlePayment = async () => {
       const CartItem = cart.map((item) => {
-        // Remove the 'photo' property from each item
         const { photo, ...rest } = item;
         return rest;
       });
     
       const date = new Date().toISOString();
-    
+      if (totalPrice > 0 ){
       try {
-        const userRef = doc(db, "orders", user.uid); // Use "users" collection
+        const userRef = doc(db, "orders", user.uid);
         const userDoc = await getDoc(userRef);
     
         if (userDoc.exists()) {
@@ -91,8 +91,11 @@ const CheckOut = () => {
       } catch (e) {
         console.error("Error adding document: ", e);
       }
+    }
+    else {
+      setShoppingFirst(true)
+    }
     };    
-    
   
   return (
     <div className='pt-20 sm:pt-24 md:pt-30 w-full'>
@@ -115,6 +118,7 @@ const CheckOut = () => {
             )}
             {/* Payment Amount */}
             <div className="md:w-[35%] bg-red-100 py-5 px-8 h-fit">
+              {shoppingFirst && <div className='text-center text-lg md:text-xl pb-3 text-red-500'>Shopping First</div>}
               <div className="flex justify-between pb-3">
                 <span>Subtotal:</span>
                 <span>₹{calculateTotalPrice()}</span>
