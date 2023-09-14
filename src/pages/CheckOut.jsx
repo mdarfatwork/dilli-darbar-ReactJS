@@ -56,61 +56,6 @@ const CheckOut = () => {
     const totalCost = calculateTotalPrice();
     const shippingCost = calculateShippingCost(totalCost);
     const totalPrice = totalCost + shippingCost;
-
-    // const handlePayment = async () => {
-    //   const CartItem = cart.map((item) => {
-    //     // Remove the 'photo' property from each item
-    //     const { photo, ...rest } = item;
-    //     return rest;
-    //   });
-    
-    //   const date = Date();
-    
-    //   try {
-    //     const docRef = doc(db, "orders", user.uid);
-    //     await setDoc(docRef, {
-    //       date,
-    //       items: CartItem,
-    //     });
-    //     dispatch(resetCart());
-    
-    //     // console.log("Your order has been successfully saved in " + docRef.id);
-    //   } catch (e) {
-    //     console.error("Error adding document: ", e);
-    //   }
-    // };
-
-    // const handlePayment = async () => {
-    //   const CartItem = cart.map((item) => {
-    //     // Remove the 'photo' property from each item
-    //     const { photo, ...rest } = item;
-    //     return rest;
-    //   });
-    
-    //   const date = new Date().toISOString();
-    
-    //   try {
-    //     const userRef = doc(db, "orders", user.uid);
-    //     const userDoc = await getDoc(userRef);
-    
-    //     if (userDoc.exists()) {
-    //       const ordersArray = userDoc.data().orders || [];
-    //       ordersArray.push({
-    //         date,
-    //         items: CartItem,
-    //       });
-    
-    //       await setDoc(userRef, { orders: ordersArray }, { merge: true });
-    //       dispatch(resetCart());
-    
-    //       // console.log("Your order has been successfully saved in " + docRef.id);
-    //     } else {
-    //       console.error("User document does not exist.");
-    //     }
-    //   } catch (e) {
-    //     console.error("Error adding document: ", e);
-    //   }
-    // };
     
     const handlePayment = async () => {
       const CartItem = cart.map((item) => {
