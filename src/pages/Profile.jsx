@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import BgHeader from "../components/reused/BgHeader";
 import { getAuth } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "../firebase";
 
 const Profile = () => {
@@ -23,13 +23,34 @@ const Profile = () => {
 
   useEffect(() => {
     document.title = "Profile - Dilli Darbar";
-  }, []);
+    const fetchUserAddress = async () => {
+      try {
+        const docRef = doc(db, "usersAddress", user.uid);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const userData = docSnap.data();
+          setFormData({
+            displayName: userData.Name || "",
+            anotherEmail: userData.anotherEmail || "",
+            phoneNumber: userData.phoneNumber || "",
+            address: userData.address || "",
+            city: userData.city || "",
+          });
+        }
+      } catch (e) {
+        console.error("Error fetching user address: ", e);
+      }
+    };
+
+    fetchUserAddress();
+  }, [user]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+  
     try {
-      const docRef = await setDoc(doc(db, "usersAddress", user.uid), {
+      const docRef = doc(db, "usersAddress", user.uid);
+      await setDoc(docRef, {
         uid: user.uid,
         UserEmail: user.reloadUserInfo.email,
         Name: formData.displayName,
@@ -38,25 +59,24 @@ const Profile = () => {
         address: formData.address,
         city: formData.city,
       });
+  
       console.log("Your address successfully saved in " + docRef);
-
-      setFormData({
-        displayName: "",
-        anotherEmail: "",
-        phoneNumber: "",
-        address: "",
-        city: "",
-      });
-
-      nameInputRef.current.value = "";
-      emailInputRef.current.value = "";
-      phoneInputRef.current.value = "";
-      addressInputRef.current.value = "";
-      cityInputRef.current.value = "";
+  
+      const updatedDocSnap = await getDoc(docRef);
+      if (updatedDocSnap.exists()) {
+        const updatedUserData = updatedDocSnap.data();
+        setFormData({
+          displayName: updatedUserData.Name || "",
+          anotherEmail: updatedUserData.anotherEmail || "",
+          phoneNumber: updatedUserData.phoneNumber || "",
+          address: updatedUserData.address || "",
+          city: updatedUserData.city || "",
+        });
+      }
     } catch (e) {
       console.error("Error adding document: ", e);
     }
-  };
+  };  
 
   const handleChange = (e) => {
     const { name, value } = e.target;

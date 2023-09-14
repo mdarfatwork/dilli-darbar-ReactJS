@@ -2,14 +2,16 @@ import React, { useEffect, useState } from 'react';
 import BgHeader from '../components/reused/BgHeader'
 import { getAuth } from "firebase/auth";
 import {db} from '../firebase'
-import { collection, doc, getDoc } from 'firebase/firestore';
-import { useSelector } from 'react-redux';
+import { collection, doc, getDoc, setDoc } from 'firebase/firestore';
+import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
+import { resetCart } from '../redux/cartSlice';
 
 const CheckOut = () => {
     const [userAddress, setUserAddress] = useState(null);
     const auth = getAuth();
     const user = auth.currentUser;
+    const dispatch = useDispatch()
     // console.log(user)
     // console.log(user.uid)
 
@@ -21,7 +23,7 @@ const CheckOut = () => {
         if (addressSnapshot.exists()) {
           return addressSnapshot.data();
         } else {
-          return null; // No address data found for the user
+          return null;
         }
       } catch (error) {
         console.error('Error fetching user address:', error);
@@ -40,6 +42,7 @@ const CheckOut = () => {
   
       fetchAddressData();
     }, [user]);
+
     //For Price
     const cart = useSelector((state) => state.cart);
     const calculateTotalPrice = () => {
@@ -53,6 +56,30 @@ const CheckOut = () => {
     const totalCost = calculateTotalPrice();
     const shippingCost = calculateShippingCost(totalCost);
     const totalPrice = totalCost + shippingCost;
+
+    const handlePayment = async () => {
+      const CartItem = cart.map((item) => {
+        // Remove the 'photo' property from each item
+        const { photo, ...rest } = item;
+        return rest;
+      });
+    
+      const date = Date();
+    
+      try {
+        const docRef = doc(db, "orders", user.uid);
+        await setDoc(docRef, {
+          date,
+          items: CartItem,
+        });
+        dispatch(resetCart());
+    
+        // console.log("Your order has been successfully saved in " + docRef.id);
+      } catch (e) {
+        console.error("Error adding document: ", e);
+      }
+    };
+    
   
   return (
     <div className='pt-20 sm:pt-24 md:pt-30 w-full'>
@@ -62,11 +89,12 @@ const CheckOut = () => {
             {userAddress ? (
             <div className="md:w-[65%] flex flex-col gap-4">
               <h3>Your Shipping Address</h3>
-              <input value={userAddress.Name} className='outline-none font-sans border-b border-b-slate-400 py-2 px-4' type="text" placeholder='Enter Your Name' />
-              <input value={userAddress.anotherEmail} className='outline-none font-sans border-b border-b-slate-400 py-2 px-4' type="email" placeholder='Enter Your Email' />
-              <input value={userAddress.phoneNumber} className='outline-none font-sans border-b border-b-slate-400 py-2 px-4' type="number" placeholder='Phone Number' />
-              <input value={userAddress.address} className='outline-none font-sans border-b border-b-slate-400 py-2 px-4' type="text" placeholder='Address' />
-              <input value={userAddress.city} className='outline-none font-sans border-b border-b-slate-400 py-2 px-4' type="text" placeholder='City' />
+              <input defaultValue={userAddress.Name} className='outline-none font-sans border-b border-b-slate-400 py-2 px-4' type="text" placeholder='Enter Your Name' />
+              <input defaultValue={userAddress.anotherEmail} className='outline-none font-sans border-b border-b-slate-400 py-2 px-4' type="email" placeholder='Enter Your Email' />
+              <input defaultValue={userAddress.phoneNumber} className='outline-none font-sans border-b border-b-slate-400 py-2 px-4' type="number" placeholder='Phone Number' />
+              <input defaultValue={userAddress.address} className='outline-none font-sans border-b border-b-slate-400 py-2 px-4' type="text" placeholder='Address' />
+              <input defaultValue={userAddress.city} className='outline-none font-sans border-b border-b-slate-400 py-2 px-4' type="text" placeholder='City' />
+
               <span>Want to Edit? go to <span className='underline hover:text-red-500 cursor-pointer'><Link to="/profile">Profile</Link></span></span>
             </div> 
             ):(
@@ -87,7 +115,7 @@ const CheckOut = () => {
                 <span>Total:</span>
                 <span>₹{totalPrice}</span>
               </div>
-            <span className='py-1 px-3 bg-red-500 text-white text-lg font-sans w-fit rounded-md cursor-pointer'>Payment</span>
+            <span onClick={handlePayment} className='py-1 px-3 bg-red-500 text-white text-lg font-sans w-fit rounded-md cursor-pointer'>Payment</span>
             </div>
         </div>
       {userAddress ? (<div></div>) : (<div className='md:mb-14 2xl:mb-20'></div>) }
